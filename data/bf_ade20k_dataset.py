@@ -81,24 +81,25 @@ class BFADE20KDataset(Pix2pixDataset):
             assert self.paths_match(label_path, image_path), \
                 "The label_path %s and image_path %s don't match." % \
                 (label_path, image_path)
+
+        # input image
         image = Image.open(image_path)
         image = image.convert('RGB')
-        
-        image.save("image.png")
-
         transform_image = get_transform(self.opt, params1)
         image_tensor = transform_image(image)
 
         ref_tensor = 0
         label_ref_tensor = 0
 
-        segment_path = join(self.opt.segment_dir, file_name)
+        # input's segment
+        segment_path = join(self.opt.instance_dir, file_name)
         path_ref = image_path
 
+        # input_image --> ref
         image_ref = Image.open(path_ref).convert('RGB')
 
-        path_ref_label = segment_path
-
+        # ref label -> expansion
+        path_ref_label = join(self.opt.segment_dir, file_name)
         label_ref_tensor, params = self.get_label_tensor(path_ref_label)
         transform_image = get_transform(self.opt, params)
 
