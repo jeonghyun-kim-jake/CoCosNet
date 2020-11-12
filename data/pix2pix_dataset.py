@@ -142,6 +142,15 @@ class Pix2pixDataset(BaseDataset):
                       'ref': ref_tensor,
                       'label_ref': label_ref_tensor
                       }
+        
+        print("\n\n====")
+        print("image_path", image_path)
+        print("label_path", label_path)
+        print("key", key)
+        print("val", val)
+        print("path_ref", path_ref)
+        print("path_ref_label", path_ref_label)
+        print("====\n\n")
 
         # Give subclasses a chance to modify the final output
         self.postprocess(input_dict)
