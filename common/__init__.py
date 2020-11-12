@@ -21,7 +21,8 @@ import logging.handlers
 def create_ade20k_challenge_label_colormap():
     return np.load('common/colormap/ade20k_challenge_colormap.npy')
 
-MATRIX = create_ade20k_challenge_label_colormap()
+MATRIX = None
+#create_ade20k_challenge_label_colormap()
 
 def convert_image_to_bytes(image, img_format='PNG'):
     imgByteArr = io.BytesIO()
