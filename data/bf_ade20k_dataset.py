@@ -39,14 +39,19 @@ class BFADE20KDataset(Pix2pixDataset):
         image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
 
         image_files = []
+        image_files_checks = []
         instance_files = []
 
         for p in image_paths:            
-          if p.endswith('.jpg') or  p.endswith('.png') :
+          file_name = os.path.basename(p)
+          instance_check_path = join(instance_dir, file_name)
+          if ( p.endswith('.jpg') or  p.endswith('.png') )and isfile(instance_check_path):
             image_files.append(p)
+            image_files_checks.append(file_name)
         
-        for p in instance_paths:             
-          if p.endswith('.png') and not  p.endswith('.png.png') :
+        for p in instance_paths:        
+          file_name = os.path.basename(p)     
+          if ( p.endswith('.png') and not p.endswith('.png.png') ) and file_name in image_files_checks:
             instance_files.append(p)
 
         assert len(instance_files) == len(image_files), "The #images in {} and {} do not match.".format(len(instance_files),len(image_files))
