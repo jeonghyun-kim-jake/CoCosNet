@@ -32,31 +32,22 @@ class BFADE20Ks512Dataset(Pix2pixDataset):
         return parser
 
     def get_paths(self, opt):
-        instance_dir = opt.instance_dir
-        instance_paths = make_dataset(instance_dir, recursive=False, read_cache=True)
+        root = opt.dataroot
+        phase = 'val' if opt.phase == 'test' else 'train'
+        subfolder = 'validation' if opt.phase == 'test' else 'training'
+        cache = False if opt.phase == 'test' else True
+        all_images = sorted(make_dataset(root + '/' + subfolder, recursive=True, read_cache=cache, write_cache=False))
+        image_paths = []
+        label_paths = []
+        for p in all_images:
+            if '_%s_' % phase not in p:
+                continue
+            if p.endswith('.jpg'):
+                image_paths.append(p)
+            elif p.endswith('.png'):
+                label_paths.append(p)
 
-        image_dir = opt.image_dir
-        image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
-
-        image_files = []
-        image_files_checks = []
-        instance_files = []
-
-        for p in image_paths:            
-          file_name = os.path.basename(p)
-          instance_check_path = join(instance_dir, file_name)
-          if ( p.endswith('.jpg') or  p.endswith('.png') )and isfile(instance_check_path):
-            image_files.append(p)
-            image_files_checks.append(file_name)
-        
-        for p in instance_paths:        
-          file_name = os.path.basename(p)     
-          if ( p.endswith('.png') and not p.endswith('.png.png') ) and file_name in image_files_checks:
-            instance_files.append(p)
-
-        assert len(instance_files) == len(image_files), "The #images in {} and {} do not match.".format(len(instance_files),len(image_files))
-
-        return instance_files, image_files
+        return label_paths, image_paths
 
     def get_ref(self, opt):
         extra = '_test' if opt.phase == 'test' else ''
@@ -73,61 +64,3 @@ class BFADE20Ks512Dataset(Pix2pixDataset):
             ref_dict[key] = val
         train_test_folder = ('training', 'validation')
         return ref_dict, train_test_folder
-
-    def __getitem__(self, index):
-        # Label Image
-        label_path = self.label_paths[index]
-        label_tensor, params1 = self.get_label_tensor(label_path)
-        file_name = os.path.basename(label_path)
-
-        # input image (real images)
-        image_path = self.image_paths[index]
-        if not self.opt.no_pairing_check:
-            assert self.paths_match(label_path, image_path), \
-                "The label_path %s and image_path %s don't match." % \
-                (label_path, image_path)
-
-        # input image
-        image = Image.open(image_path)
-        image = image.convert('RGB')
-        transform_image = get_transform(self.opt, params1)
-        image_tensor = transform_image(image)
-
-        ref_tensor = 0
-        label_ref_tensor = 0
-
-        # input's segment
-        segment_path = join(self.opt.instance_dir, file_name)
-        path_ref = image_path
-
-        # input_image --> ref
-        image_ref = Image.open(path_ref).convert('RGB')
-
-        # ref label -> expansion
-        path_ref_label = join(self.opt.segment_dir, file_name)
-        label_ref_tensor, params = self.get_label_tensor(path_ref_label)
-        transform_image = get_transform(self.opt, params)
-
-        ref_tensor = transform_image(image_ref)
-
-        self_ref_flag = torch.zeros_like(ref_tensor)
-
-
-
-        input_dict = {'label': label_tensor,
-                      'image': image_tensor,
-                      'path': image_path,
-                      'self_ref': self_ref_flag,
-                      'ref': ref_tensor,
-                      'label_ref': label_ref_tensor
-                      }
-                      
-        print("\n\n====")
-        print("image_path", image_path)
-        print("label_path", label_path)
-        print("segment_path", segment_path)
-        print("====\n\n")
-        # Give subclasses a chance to modify the final output
-        self.postprocess(input_dict)
-
-        return input_dict
